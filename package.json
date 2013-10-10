@@ -1,0 +1,35 @@
+{
+  "name": "redis-keyshape",
+  "version": "0.0.0",
+  "description": "Safely and consistently access redis keys",
+  "main": "index.js",
+  "dependencies": {
+    "async": "~0.2.9",
+    "lodash": "~2.2.1",
+    "request": "~2.27.0"
+  },
+  "devDependencies": {
+    "async": "~0.2.9",
+    "request": "~2.27.0"
+  },
+  "scripts": {
+    "test": "make test",
+    "generate-commands": "coffee ./scripts/generate-redis-commands.coffee"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jasonkuhrt/redis-keyshape.git"
+  },
+  "keywords": [
+    "redis",
+    "key",
+    "namespace",
+    "key-name",
+    "key-access"
+  ],
+  "author": "Jason Kuhrt <jasonkuhrt@me.com> (http://jasonkuhrt.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jasonkuhrt/redis-keyshape/issues"
+  }
+}
