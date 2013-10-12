@@ -1,4 +1,4 @@
-# redis-keyshape
+# redis-keyshape [![Dependency Status](https://gemnasium.com/jasonkuhrt/redis-keyshape.png)](https://gemnasium.com/jasonkuhrt/redis-keyshape)
 
 # Install
 ```
