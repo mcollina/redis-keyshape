@@ -1,6 +1,6 @@
 {
   "name": "redis-keyshape",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Safely and consistently access redis keys",
   "main": "index.js",
   "dependencies": {
