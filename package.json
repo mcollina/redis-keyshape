@@ -28,7 +28,7 @@
     "key-access"
   ],
   "author": "Jason Kuhrt <jasonkuhrt@me.com> (http://jasonkuhrt.com/)",
-  "license": "MIT",
+  "license": "BSD-2-Clause",
   "bugs": {
     "url": "https://github.com/jasonkuhrt/redis-keyshape/issues"
   }

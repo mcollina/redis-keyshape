@@ -1,20 +1,20 @@
-_ = require('lodash')
+{format} = require('util')
+{curry, transform, flatten, keys, isArray} = require('lodash')
 redis_commands = require('./redis-commands')
-format = require('util').format
 
 
 
 # Utilities
 
 arrayify = (maybe_array)->
-  if _.isArray(maybe_array) then maybe_array else [maybe_array]
+  if isArray(maybe_array) then maybe_array else [maybe_array]
 
 
-module.exports = (db, key_format, key_type)->
+module.exports = curry (db, key_type, key_format)->
   # validate the given key_type
-  if not redis_commands[key_type] then throw new Error format('Unknown redis key type: %j. Redis keys are: %j', key_type, _.keys(redis_commands))
+  if not redis_commands[key_type] then throw new Error format('Unknown redis key type: %j. Redis keys are: %j', key_type, keys(redis_commands))
   # always add generic redis-commands in addition to the key_type's
-  redis_commands_sub_set = _.flatten(
+  redis_commands_sub_set = flatten(
     [redis_commands[key_type], redis_commands['generic']]
   )
   make_key = create_key_maker(key_format)
@@ -44,11 +44,11 @@ do_create_key_guard = (db, make_key, command_names)->
   fn = (givenKey)->
     do_transform = (obj, command_name)->
       obj[command_name] = db[command_name].bind(db, make_key(givenKey))
-    _.transform command_names, do_transform, {}
+    transform command_names, do_transform, {}
   # Decorate factory with redis commands which
   # are NOT curried but WILL pass the givenKey
   # to keyFactory
   do_transform = (obj, command_name)->
     obj[command_name] = (givenKey, args...)->
       db[command_name](make_key(givenKey), args...)
-  _.transform command_names, do_transform, fn
+  transform command_names, do_transform, fn
