@@ -2,8 +2,9 @@
 var util = require('util'),
     format = util.format;
 var lo = require('lodash'),
-    curry = lo.curry,
     first = lo.first,
+    curry = lo.curry,
+    each = lo.each,
     filter = lo.filter,
     rest = lo.rest,
     transform = lo.transform,
@@ -29,36 +30,40 @@ function concat(a, b){
   return a.concat(b);
 }
 
+function augment(o, k, v){
+  if (o[k]) throw new Error('Cannot augment object, key already taken: ' + k);
+  o[k] = v;
+  return o;
+}
 
 
-exports.setup_keyshapes = setup_keyshapes;
-exports.create_keyshape = create_keyshape;
+
+exports.create_keyshape = curry(create_keyshape);
+exports.add_keyshape = curry(add_keyshape);
+
+
 
 // Augment redis_client with keyshapes exposed
 // as methods whose names' are inferred from each
 // one's given key_pat.
-function setup_keyshapes(redis_client){
-  var actions = {
-    // Add keyshape to redis_client exposed
-    // as method named using key_pat_to_fname
-    // inferance.
-    add: function(key_pat, keytype){
-      actions.add_manual(key_pat_to_fname(key_pat), key_pat, keytype);
-      return actions;
-    },
-    // Add keyshape to redis_client exposed
-    // as method named using custom identifier.
-    add_manual: function(fname, key_pat, keytype){
-      redis_client[fname] = create_keyshape(redis_client, keytype, key_pat);
-      return actions;
-    }
-  };
-  return actions;
+
+// Add keyshape to redis_client exposed
+// as method named using key_pat_to_fname
+// inferance.
+//
+// @api public
+//
+function add_keyshape(redis_client, key_pat, key_type){
+  add_keyshape_manual(redis_client, key_pat_to_fname(key_pat), key_pat, key_type);
 }
+
 
 // Create an object with redis_client methods that
 // augment the given 'key' arg, and then passthrough
 // to the wrapped redis_client.
+//
+// @api public
+//
 function create_keyshape(redis_client, key_type, key_pat){
   // validate the given key_type
   assert_valid_key_type(key_type);
@@ -66,6 +71,36 @@ function create_keyshape(redis_client, key_type, key_pat){
   var make_key = create_key_maker(key_pat);
   return do_create_keyshape(redis_client, make_key, key_commands);
 }
+
+
+// Add keyshape to redis_client exposed
+// as method named using custom identifier.
+//
+// @api private
+//
+function setup_keyshape_hash(redis_client){
+  redis_client._keyshapes = {};
+  // Wrap multi command to return an object with all keyshapes.
+  var multi = redis_client.multi;
+  redis_client.multi = function(){
+    var mutli_client = multi.apply(redis_client, arguments);
+    each(redis_client._keyshapes, function(keyshape, fname){
+      augment(mutli_client, fname, keyshape);
+    });
+    return mutli_client;
+  };
+}
+
+function add_keyshape_manual(redis_client, fname, key_pat, key_type){
+  if (!redis_client._keyshapes) setup_keyshape_hash(redis_client);
+  // Add new keyshape to existing keyshapes hash.
+  augment(redis_client._keyshapes, fname, create_keyshape(redis_client, key_type, key_pat));
+  // Expose new keyshape directly on
+  // redis_client for api ergonomics.
+  augment(redis_client, fname, redis_client._keyshapes[fname]);
+  return redis_client;
+}
+
 
 function do_create_keyshape(redis_client, make_key, command_names){
   function do_transform(obj, command_name){
