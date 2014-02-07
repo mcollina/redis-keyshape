@@ -11,13 +11,13 @@ npm install jasonkuhrt/redis-keyshape
 - Temporary variables for key access
 
 ```js
-var db = require('redis').createClient()
+var redis_client = require('redis').createClient()
 
 var key1 = 'foo:' + foo_id
-db.hget(key1, 'foo_field', function(err, foo_field){...})
+redis_client.hget(key1, 'foo_field', function(err, foo_field){...})
 
 var key2 = 'foo:' + foo_id + ':member:' + member_id
-db.smembers(key2, 'foo_field', function(err, members){...})
+redis_client.smembers(key2, 'foo_field', function(err, members){...})
 ```
 
 ### Solution
@@ -25,54 +25,33 @@ db.smembers(key2, 'foo_field', function(err, members){...})
 - No temporary variables
 
 ```js
-var db = require('redis').createClient()
-var keyshape = require('redis-keyshape')
+var redis_client = require('redis').createClient();
+var keyshape = require('redis-keyshape'),
+    create_keyshape = keyshape.create_keyshape,
+    add_keyshape = keyshape.add_keyshape;
 
-// Create some keyshapes
+// Create some keyshapes.
 
-db.foo = keyshape(db, 'foo:%s', 'hash')
-db.foo_member = keyshape(db, 'foo:%s:member:%s', 'set')
+redis_client.foo = create_keyshape(redis_client, 'foo:%s', 'hash');
+redis_client.foo_member = create_keyshape(redis_client, 'foo:%s:member:%s', 'set');
 
-// Use them like
+// OR, augment the redis_client with keyshapes if the key pattern follows convention*.
+// * https://github.com/jasonkuhrt/redis-keyshape/issues/7
 
-db.foo.hget(foo_id, 'foo_field', function(err, foo_field){...})
-db.foo_member.smembers([foo_id, member_id], 'foo_field', function(err, members){...})
+add_keyshape(redis_client, 'foo:%s', 'hash'); // redis_client.foo now a keyshape
+add_keyshape(redis_client, 'foo:%s:member:%s', 'set'); // redis_client.foo_member now a keyshape
 
-// or alternatively
+// Keyshapes take the same signature except that the key argument
+// need only include the keyshape's variable.
 
-db.foo(foo_id).hget('foo_field', function(err, foo_field){...})
-db.foo_member(foo_id, member_id).smembers('foo_field', function(err, members){...})
+redis_client.foo.hget(foo_id, 'foo_field', function(err, foo_field){...})
 
-// The alternative style is sometimes nicer
+// Often keyshapes require multiple variables. In such cases use an array
+// to provide the keyshape variables.
 
-var foo = db.foo(foo_id)
-async.series([
-  foo.hmget.bind(db, 'foo_field', 'foo2_field'),
-  foo.hincby.bind(db, 'bar_field', 1),
-  foo.del.bind(db, 'foobar_field'),
-  foo.len.bind(db),
-], callback)
+redis_client.foo_member.smembers([foo_id, member_id], 'foo_field', function(err, members){...})
 ```
 
 ## API
-##### `module.exports(redis_client, keyshape, redis_key_type)`
-- **@param** `redis_client` `<Object>`  
-  a redis client to derive command functions from
 
-- **@param** `keyshape` `<String>`  
-  a pattern defining the keyshape. Use `%s` wherever interpolation should occur
-
-- **@param** `redis_key_type` `<String>`  
-  The type of key ('set', 'hash', etc). This datum is used to ensure
-  the correct redis commands are exposed on the returned object
-
-- **@return** `<Function>/<Object>`  
-  Object of redis-commands for the key-type (as well as generic commands applicable to all types).  
-  Each commands' first argument accepts the key variable instead of the full keyname. If the keyname
-  has multiple variables supply them as an array (See example above).  
-  `Function(key_var, ...)`
-  - @param `key_var` `<String>`  
-    variable-number of arguments for each variable in keyshape
-  - @return `<Object>`  
-    Object of redis-commands for the key-type (as well as generic commands applicable to all types).  
-    Each commands' first argument (the key) is partially applied freeing the user from having to supply it.
+  TODO
