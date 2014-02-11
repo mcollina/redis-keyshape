@@ -9,7 +9,6 @@ var lo = require('lodash'),
     rest = lo.rest,
     transform = lo.transform,
     isFunction = lo.isFunction,
-    keys = lo.keys,
     isArray = lo.isArray;
 var redis_commands = require('./redis-commands');
 
@@ -37,6 +36,16 @@ function augment(o, k, v){
 }
 
 
+var holeable_redis_commands = (function(){
+  var array1 = concat(redis_commands['generic'], redis_commands['list']);
+  var array2 = concat(array1, redis_commands['hash']);
+  var array3 = concat(array2, redis_commands['set']);
+  var array4 = concat(array3, redis_commands['sorted_set']);
+  var array5 = concat(array4, redis_commands['string']);
+  return array5;
+})();
+
+// console.log(holeable_redis_commands);
 
 exports.create_keyshape = curry(create_keyshape);
 exports.add_keyshape = curry(add_keyshape);
@@ -53,8 +62,8 @@ exports.add_keyshape = curry(add_keyshape);
 //
 // @api public
 //
-function add_keyshape(redis_client, key_pat, key_type){
-  add_keyshape_manual(redis_client, key_pat_to_fname(key_pat), key_pat, key_type);
+function add_keyshape(redis_client, key_pat){
+  add_keyshape_manual(redis_client, key_pat_to_fname(key_pat), key_pat);
 }
 
 
@@ -64,12 +73,9 @@ function add_keyshape(redis_client, key_pat, key_type){
 //
 // @api public
 //
-function create_keyshape(redis_client, key_type, key_pat){
-  // validate the given key_type
-  assert_valid_key_type(key_type);
-  var key_commands = get_key_commands(key_type);
+function create_keyshape(redis_client, key_pat){
   var make_key = create_key_maker(key_pat);
-  return do_create_keyshape(redis_client, make_key, key_commands);
+  return do_create_keyshape(redis_client, make_key);
 }
 
 
@@ -91,10 +97,10 @@ function setup_keyshape_hash(redis_client){
   };
 }
 
-function add_keyshape_manual(redis_client, fname, key_pat, key_type){
+function add_keyshape_manual(redis_client, fname, key_pat){
   if (!redis_client._keyshapes) setup_keyshape_hash(redis_client);
   // Add new keyshape to existing keyshapes hash.
-  augment(redis_client._keyshapes, fname, create_keyshape(redis_client, key_type, key_pat));
+  augment(redis_client._keyshapes, fname, create_keyshape(redis_client, key_pat));
   // Expose new keyshape directly on
   // redis_client for api ergonomics.
   augment(redis_client, fname, redis_client._keyshapes[fname]);
@@ -102,13 +108,16 @@ function add_keyshape_manual(redis_client, fname, key_pat, key_type){
 }
 
 
-function do_create_keyshape(redis_client, make_key, command_names){
+function do_create_keyshape(redis_client, make_key){
   function do_transform(obj, command_name){
-    obj[command_name] = function(/*key_name_vars, key_args...*/){
-      return splat(redis_client[command_name].bind(redis_client), push(make_key(first(arguments)), rest(arguments)));
+    obj[command_name] = function(){
+      var key = make_key(first(arguments));
+      var args = rest(arguments);
+      var f = redis_client[command_name].bind(redis_client);
+      return splat(f, push(key, args));
     };
   }
-  return transform(command_names, do_transform, {});
+  return transform(holeable_redis_commands, do_transform, {});
 }
 
 
@@ -136,21 +145,4 @@ function Default_Key_Maker(key_pat){
     return splat(format, push(key_pat, arrayify(given_key)));
   }
   return make_key;
-}
-
-
-function get_key_commands(key_type){
-  // always add generic redis-commands in addition to the key_type's
-  return concat(redis_commands[key_type], redis_commands['generic']);
-}
-
-
-function assert_valid_key_type(key_type){
-  if (!redis_commands[key_type]) throw Error_Unknown_key(key_type);
-}
-
-
-function Error_Unknown_key(key_type){
-  var msg = format('Unknown redis key type: %j. Redis keys are: %j', key_type, keys(redis_commands));
-  return new Error(msg);
 }
