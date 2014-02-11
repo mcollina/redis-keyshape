@@ -1,4 +1,4 @@
-# redis-keyshape [![Dependency Status](https://gemnasium.com/jasonkuhrt/redis-keyshape.png)](https://gemnasium.com/jasonkuhrt/redis-keyshape)
+# redis-keyshape [![Code Climate](https://codeclimate.com/github/jasonkuhrt/redis-keyshape.png)](https://codeclimate.com/github/jasonkuhrt/redis-keyshape) [![Dependency Status](https://gemnasium.com/jasonkuhrt/redis-keyshape.png)](https://gemnasium.com/jasonkuhrt/redis-keyshape)
 
 Easily, consistently, clearly access redis keys.
 
