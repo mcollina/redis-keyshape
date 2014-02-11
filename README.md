@@ -11,10 +11,10 @@ npm install redis-keyshape
 
 ## API
 
-#### addKeyshape(redisClient, key_pattern)
+#### addKeyshape(redisClient, keyPattern)
   TODO
 
-#### createKeyshape(redisClient, key_pattern)
+#### createKeyshape(redisClient, keyPattern)
   TODO
 
 
