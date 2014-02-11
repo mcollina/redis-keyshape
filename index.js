@@ -54,11 +54,11 @@ function to_upper_case(str){
 //
 // @api public
 //
-function add_keyshape(redis_client, key_pat){
-  add_keyshape_manual(redis_client, key_pat_to_fname(key_pat), key_pat);
+function addKeyshape(redis_client, key_pat){
+  addKeyshape_manual(redis_client, key_pat_to_fname(key_pat), key_pat);
 }
 
-exports.add_keyshape = curry(add_keyshape);
+exports.addKeyshape = curry(addKeyshape);
 
 
 // Create an object with redis_client methods that
@@ -67,12 +67,12 @@ exports.add_keyshape = curry(add_keyshape);
 //
 // @api public
 //
-function create_keyshape(redis_client, key_pat){
+function createKeyshape(redis_client, key_pat){
   var make_key = create_key_maker(key_pat);
-  return do_create_keyshape(redis_client, make_key);
+  return do_createKeyshape(redis_client, make_key);
 }
 
-exports.create_keyshape = curry(create_keyshape);
+exports.createKeyshape = curry(createKeyshape);
 
 
 // Add keyshape to redis_client exposed
@@ -93,10 +93,10 @@ function setup_keyshape_hash(redis_client){
   };
 }
 
-function add_keyshape_manual(redis_client, fname, key_pat){
+function addKeyshape_manual(redis_client, fname, key_pat){
   if (!redis_client._keyshapes) setup_keyshape_hash(redis_client);
   // Add new keyshape to existing keyshapes hash.
-  augment(redis_client._keyshapes, fname, create_keyshape(redis_client, key_pat));
+  augment(redis_client._keyshapes, fname, createKeyshape(redis_client, key_pat));
   // Expose new keyshape directly on
   // redis_client for api ergonomics.
   augment(redis_client, fname, redis_client._keyshapes[fname]);
@@ -104,7 +104,7 @@ function add_keyshape_manual(redis_client, fname, key_pat){
 }
 
 
-function do_create_keyshape(redis_client, make_key){
+function do_createKeyshape(redis_client, make_key){
   function do_transform(obj, command_name){
     var redis_keyshape_command = function(){
       var key = make_key(first(arguments));

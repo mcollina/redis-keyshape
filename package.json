@@ -1,14 +1,14 @@
 {
   "name": "redis-keyshape",
   "version": "0.2.1",
-  "description": "Safely and consistently access redis keys",
+  "description": "Easily, consistently, clearly access redis keys.",
   "main": "index.js",
   "dependencies": {
     "lodash": "~2.4.1"
   },
   "devDependencies": {
-    "async": "~0.2.9",
-    "request": "~2.27.0"
+    "async": "~0.2.10",
+    "request": "~2.33.0"
   },
   "scripts": {
     "test": "make test",
